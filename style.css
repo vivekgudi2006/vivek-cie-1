@@ -1,0 +1,31 @@
+/* File upload styling */
+.file-upload-wrapper {
+    position: relative;
+  }
+  
+  #drop-area {
+    border: 2px dashed #ccc;
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background-color: #ffffff;
+  }
+  
+  #drop-area:hover {
+    border-color: #007bff;
+    background-color: #f8f9fa;
+  }
+  
+  #drop-area.border-primary {
+    border: 2px dashed #007bff;
+  }
+  
+  .upload-icon {
+    color: #007bff;
+  }
+  
+  #image-preview {
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: contain;
+  }

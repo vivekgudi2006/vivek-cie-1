@@ -1,0 +1,165 @@
+<%- include('partials/header') %>
+
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h3 class="mb-0">Add New Art Piece</h3>
+        </div>
+        <div class="card-body">
+          <% if(typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+            <div class="alert alert-danger">
+              <%= error_msg %>
+            </div>
+          <% } %>
+          <% if(typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+            <div class="alert alert-success">
+              <%= success_msg %>
+            </div>
+          <% } %>
+          
+          <form action="/gallery/addProduct" method="POST" enctype="multipart/form-data">
+            <div class="form-group mb-3">
+              <label for="name">Artwork Name</label>
+              <input type="text" class="form-control" id="name" name="name" value="<%= typeof formData !== 'undefined' ? formData.name : '' %>" required>
+            </div>
+            
+            <div class="form-group mb-3">
+              <label for="description">Description</label>
+              <textarea class="form-control" id="description" name="description" rows="3" required><%= typeof formData !== 'undefined' ? formData.description : '' %></textarea>
+            </div>
+            
+            <div class="form-group mb-3">
+              <label for="category">Category</label>
+              <select class="form-control" id="category" name="category" required>
+                <option value="">Select Category</option>
+                <option value="Paintings" <%= typeof formData !== 'undefined' && formData.category === 'Paintings' ? 'selected' : '' %>>Paintings</option>
+                <option value="Sculptures" <%= typeof formData !== 'undefined' && formData.category === 'Sculptures' ? 'selected' : '' %>>Sculptures</option>
+                <option value="Photographs" <%= typeof formData !== 'undefined' && formData.category === 'Photographs' ? 'selected' : '' %>>Photographs</option>
+                <option value="Sketches" <%= typeof formData !== 'undefined' && formData.category === 'Sketches' ? 'selected' : '' %>>Sketches</option>
+              </select>
+            </div>
+            
+            <div class="form-group mb-3">
+              <label for="minbid">Minimum Bid (₹)</label>
+              <input type="number" class="form-control" id="minbid" name="minbid" value="<%= typeof formData !== 'undefined' ? formData.minbid : '' %>" required>
+            </div>
+            
+            <div class="form-group mb-3">
+              <label for="owner">Owner</label>
+              <input type="text" class="form-control" id="owner" name="owner" value="<%= typeof currentUser !== 'undefined' ? currentUser.name : '' %>" required>
+            </div>
+            
+            <div class="form-group mb-4">
+              <label>Artwork Image</label>
+              <div class="file-upload-wrapper">
+                <div id="drop-area" class="border rounded p-5 text-center position-relative">
+                  <input type="file" class="file-input d-none" id="fileElem" name="image" accept="image/*" required>
+                  <label for="fileElem" class="d-block">
+                    <div class="upload-icon mb-3">
+                      <i class="fas fa-cloud-upload-alt fa-3x text-primary"></i>
+                    </div>
+                    <p class="mb-1">Drag and drop your image here</p>
+                    <p class="text-muted small mb-2">or</p>
+                    <button type="button" class="btn btn-outline-primary" id="browseBtn">Browse Files</button>
+                    <p class="mt-2 text-muted small">Supported formats: JPG, PNG, GIF (Max: 5MB)</p>
+                  </label>
+                  <div id="preview" class="mt-3 d-none">
+                    <img id="imagePreview" class="img-thumbnail" style="max-height: 200px;">
+                    <p id="fileName" class="mt-2 mb-0 text-muted small"></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="d-grid">
+              <button type="submit" class="btn btn-primary btn-lg">Add Artwork</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const dropArea = document.getElementById('drop-area');
+  const fileInput = document.getElementById('fileElem');
+  const browseBtn = document.getElementById('browseBtn');
+  const preview = document.getElementById('preview');
+  const imagePreview = document.getElementById('imagePreview');
+  const fileName = document.getElementById('fileName');
+  
+  // Prevent default drag behaviors
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, preventDefaults, false);
+  });
+  
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  
+  // Highlight drop area when item is dragged over
+  ['dragenter', 'dragover'].forEach(eventName => {
+    dropArea.addEventListener(eventName, highlight, false);
+  });
+  
+  ['dragleave', 'drop'].forEach(eventName => {
+    dropArea.addEventListener(eventName, unhighlight, false);
+  });
+  
+  function highlight() {
+    dropArea.classList.add('border-primary');
+    dropArea.style.backgroundColor = '#f8f9fa';
+  }
+  
+  function unhighlight() {
+    dropArea.classList.remove('border-primary');
+    dropArea.style.backgroundColor = '';
+  }
+  
+  // Handle dropped files
+  dropArea.addEventListener('drop', handleDrop, false);
+  
+  function handleDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    
+    if (files.length) {
+      fileInput.files = files;
+      displayPreview(files[0]);
+    }
+  }
+  
+  function displayPreview(file) {
+    if (file && file.type.match('image.*')) {
+      const reader = new FileReader();
+      
+      reader.onload = function(e) {
+        imagePreview.src = e.target.result;
+        fileName.textContent = file.name;
+        preview.classList.remove('d-none');
+      }
+      
+      reader.readAsDataURL(file);
+    }
+  }
+  
+  // Handle file input change
+  fileInput.addEventListener('change', function() {
+    if (this.files.length) {
+      displayPreview(this.files[0]);
+    }
+  });
+  
+  // Handle browse button click
+  browseBtn.addEventListener('click', function() {
+    fileInput.click();
+  });
+});
+</script>
+
+<%- include('partials/footer') %>
